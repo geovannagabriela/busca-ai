@@ -11,6 +11,7 @@ RUN apt-get update \
     && sed -i 's/<VirtualHost *:80>/<VirtualHost *:10000>/' /etc/apache2/sites-available/000-default.conf
 
 COPY BUSCA-AI/ /var/www/html/
+COPY tests/postgres-adapter-smoke.php /opt/busca-ai-tests/postgres-adapter-smoke.php
 
 # Mantém o esquema SQL fora da raiz pública e valida o ambiente no build.
 RUN mkdir -p /var/lib/busca-ai \
