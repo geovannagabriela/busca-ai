@@ -1,13 +1,8 @@
-/*
- * BUSCA AÍ — interações
- * O site continua totalmente utilizável sem JavaScript: a classe "js" (adicionada no <head>)
- * só ativa os estados iniciais das animações e o menu recolhível em telas pequenas.
- */
 document.addEventListener("DOMContentLoaded", () => {
 
     const reduzirMovimento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    /* ---------- Revelação suave ao rolar ---------- */
+    
     const seletoresRevelar = [
         ".inicio-texto", ".card-destaque", ".processo", ".etapa", ".beneficio", ".chamada",
         ".funciona-topo", ".etapa-funciona", ".funciona-diferencial", ".funciona-chamada",
@@ -21,7 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const alvos = document.querySelectorAll(seletoresRevelar);
 
-    // Atraso em cascata entre irmãos do mesmo grupo.
+   
     alvos.forEach((el) => {
         const irmaos = Array.from(el.parentElement.children).filter((i) => i.matches(seletoresRevelar));
         el.style.setProperty("--atraso", `${Math.min(irmaos.indexOf(el), 6) * 70}ms`);
@@ -79,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.addEventListener("scroll", atualizarCabecalho, { passive: true });
     }
 
-    /* ---------- Mostrar / ocultar senha (não altera o valor enviado) ---------- */
+    /* ---------- Mostrar senha ---------- */
     document.querySelectorAll("[data-mostrar-senha]").forEach((botao) => {
         botao.addEventListener("click", () => {
             const campo = document.getElementById(botao.dataset.mostrarSenha);
@@ -93,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    /* ---------- Confirmação opcional em ações importantes ---------- */
+    
     document.querySelectorAll("[data-confirmar]").forEach((elemento) => {
         elemento.addEventListener("click", (evento) => {
             if (!confirm(elemento.dataset.confirmar || "Deseja realmente continuar?")) {
@@ -102,7 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    /* ---------- Evita envio duplo dos formulários ---------- */
+    
     document.querySelectorAll("form").forEach((formulario) => {
         formulario.addEventListener("submit", () => {
             const enviar = formulario.querySelector('button[type="submit"]');
@@ -112,7 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Ao voltar pelo histórico (bfcache) o botão não pode ficar travado.
+    
     window.addEventListener("pageshow", (evento) => {
         if (evento.persisted) {
             document.querySelectorAll('form button[type="submit"]').forEach((b) => { b.disabled = false; });
