@@ -10,33 +10,40 @@ Projeto web de gerenciamento e acompanhamento de devoluções empresariais.
 ## Estrutura
 O aplicativo completo fica em `BUSCA-AI/`. As páginas HTML, PHP, imagens, CSS e JavaScript são servidas pelo Apache no Render. O front-end público publicado na Vercel continua separado e aponta os acessos PHP para o serviço Render.
 
-## Deploy já existente
-O serviço Render `busca-ai-php` usa o Dockerfile da raiz, contexto `.`, porta HTTP `10000`. O projeto Vercel `buscaai` continua servindo as páginas públicas. Esta migração altera somente a conexão do backend PHP e o driver de banco.
+## Deploy atual e migração
+O serviço Render `busca-ai-php` continua apontando para a branch `main`. A migração PostgreSQL está isolada na branch `deploy/supabase-postgres` e ainda não foi mesclada nem publicada. O projeto Vercel continua servindo o front-end.
 
-## Supabase
-O banco PostgreSQL do Supabase é independente do MySQL do InfinityFree. A estrutura contém as tabelas:
+## Banco Supabase
+O banco PostgreSQL do Supabase é independente do MySQL do InfinityFree. Ele contém as tabelas:
 - `empresas`
 - `usuarios_buscaai`
 - `devolucoes`
 - `historico_devolucoes`
 - `mensagens_contato`
 
-O esquema inicial não importa registros de empresas, usuários, devoluções ou mensagens. O banco novo começa vazio; os registros do InfinityFree não são apagados nem modificados.
+Foi feita uma cópia dos dados exportados do InfinityFree para o Supabase, preservando os IDs:
+- `empresas`: 4 registros
+- `usuarios_buscaai`: 1 registro
+- `devolucoes`: 3 registros
+- `historico_devolucoes`: 6 registros
+- `mensagens_contato`: 0 registros
 
-## Variáveis no Render
-No serviço Render `busca-ai-php`, configure as variáveis abaixo usando a connection string **Session pooler** exibida em Supabase → Connect. O Render precisa de endpoint IPv4; por isso, use o pooler de sessão (porta 5432), não o endpoint direto IPv6.
+As chaves estrangeiras foram conferidas: não há devoluções sem empresa nem históricos sem devolução. O banco MySQL do InfinityFree não foi alterado; ele permanece independente e acessível.
+
+## Variáveis de conexão no Render
+Quando a migração estiver aprovada nos testes, configurar no serviço Render `busca-ai-php` as variáveis abaixo usando a connection string **Session pooler** do Supabase:
 
 - `DB_HOST`: host do Session pooler
 - `DB_PORT`: `5432`
 - `DB_NAME`: `postgres`
-- `DB_USER`: usuário exibido na connection string do Session pooler (formato `postgres.<project-ref>`)
-- `DB_PASSWORD`: senha do banco PostgreSQL definida no painel Supabase
+- `DB_USER`: usuário do Session pooler (formato `postgres.<project-ref>`)
+- `DB_PASSWORD`: senha do banco PostgreSQL, inserida diretamente no painel do Render
 - `DB_SSLMODE`: `require`
 
-Nunca coloque a senha no GitHub, em arquivos públicos ou no chat. Salve-a somente nos Secrets/Environment do Render.
+Nunca coloque a senha no GitHub, em arquivos públicos ou no chat. Não substitua as variáveis de produção antes de validar o backend.
 
 ## Segurança e validação
-As cinco tabelas estão com Row Level Security habilitado. O backend PHP conecta ao PostgreSQL pelo servidor Render; não exponha a chave de banco nem credenciais no navegador. Antes de considerar a migração concluída, valide cadastro, login, dashboard, solicitação e acompanhamento de devoluções, atualização de status, histórico, perfil, senha e contato.
+As cinco tabelas estão com Row Level Security habilitado. O backend deve acessar o PostgreSQL no servidor Render; credenciais não devem ser expostas no navegador. Antes de mesclar e publicar, validar conexão e os fluxos de cadastro, login empresarial e interno, dashboard, solicitação e acompanhamento de devoluções, atualização de status, histórico, perfil, alteração de senha e contato.
 
 ## Ambiente local
-O ambiente XAMPP antigo usa MySQL e não é compatível com esta conexão PostgreSQL sem configurar as mesmas variáveis e instalar `pdo_pgsql`. O banco MySQL do InfinityFree permanece como cópia independente e não é alterado por este deploy.
+O ambiente XAMPP atual usa MySQL e não é compatível diretamente com a conexão PostgreSQL desta branch. A migração não altera o banco local nem o banco MySQL do InfinityFree.
