@@ -1,0 +1,53 @@
+name: Validate Supabase migration image
+
+on:
+  push:
+    branches:
+      - deploy/supabase-postgres
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "Dockerfile"
+      - "BUSCA-AI/**/*.php"
+      - "tests/**/*.php"
+      - ".github/workflows/validate-postgres-migration.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  docker-build-and-postgres-smoke-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build migration image
+        run: docker build --pull -t busca-ai-postgres-validation .
+
+      - name: Test PDO adapter against temporary PostgreSQL
+        run: |
+          docker run --rm --network host \
+            -e DB_HOST=127.0.0.1 \
+            -e DB_PORT=5432 \
+            -e DB_NAME=postgres \
+            -e DB_USER=postgres \
+            -e DB_PASSWORD=postgres \
+            -e DB_SSLMODE=disable \
+            busca-ai-postgres-validation \
+            php /opt/busca-ai-tests/postgres-adapter-smoke.php
