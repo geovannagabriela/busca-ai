@@ -165,6 +165,29 @@ class mysqli
         }
     }
 
+    /**
+     * Mantém compatibilidade com as páginas que agrupam operações
+     * em transações (cadastro de devolução e atualização de status).
+     */
+    public function begin_transaction(): bool
+    {
+        return $this->pdo->beginTransaction();
+    }
+
+    public function commit(): bool
+    {
+        return $this->pdo->commit();
+    }
+
+    public function rollback(): bool
+    {
+        if (!$this->pdo->inTransaction()) {
+            return false;
+        }
+
+        return $this->pdo->rollBack();
+    }
+
     public function close(): void
     {
         unset($this->pdo);
