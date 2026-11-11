@@ -15,6 +15,13 @@ COPY BUSCA-AI/ /var/www/html/
 # Mantém o esquema SQL fora da raiz pública.
 RUN mkdir -p /var/lib/busca-ai \
     && if [ -f /var/www/html/busca_ai_novo.sql ]; then mv /var/www/html/busca_ai_novo.sql /var/lib/busca-ai/schema-mysql.sql; fi \
+    && php -m | grep -qi '^pdo_pgsql
+
+EXPOSE 10000
+
+CMD ["apache2-foreground"]
+ \
+    && find /var/www/html -type f -name '*.php' -print0 | xargs -0 -n1 php -l \
     && chown -R www-data:www-data /var/www/html /var/lib/busca-ai
 
 EXPOSE 10000
