@@ -4,41 +4,39 @@ Projeto web de gerenciamento e acompanhamento de devoluções empresariais.
 
 ## Tecnologias
 - PHP 8.3 com Apache
-- MySQL (mysqli)
+- PostgreSQL no Supabase (PDO_PGSQL)
 - HTML, CSS e JavaScript
 
 ## Estrutura
-O aplicativo completo fica em `BUSCA-AI/`. As páginas HTML, PHP, imagens, CSS e JavaScript são servidas pelo mesmo Apache. Isso mantém login, sessões e formulários no mesmo domínio.
+O aplicativo completo fica em `BUSCA-AI/`. As páginas HTML, PHP, imagens, CSS e JavaScript são servidas pelo Apache no Render. O front-end público publicado na Vercel continua separado e aponta os acessos PHP para o serviço Render.
 
-## Executar localmente
-Coloque a pasta `BUSCA-AI` em `htdocs` do XAMPP. Configure o MySQL local em `BUSCA-AI/conexao.php` ou use as variáveis de ambiente.
+## Deploy já existente
+O serviço Render `busca-ai-php` usa o Dockerfile da raiz, contexto `.`, porta HTTP `10000`. O projeto Vercel `buscaai` continua servindo as páginas públicas. Esta migração altera somente a conexão do backend PHP e o driver de banco.
 
-## Deploy no Render
-O repositório contém um `Dockerfile` na raiz. Configure o Web Service com:
-- Runtime: Docker
-- Dockerfile Path: `./Dockerfile`
-- Docker Context: `.`
-- Branch: `main`
-- Porta HTTP: `10000`
+## Supabase
+O banco PostgreSQL do Supabase é independente do MySQL do InfinityFree. A estrutura contém as tabelas:
+- `empresas`
+- `usuarios_buscaai`
+- `devolucoes`
+- `historico_devolucoes`
+- `mensagens_contato`
 
-O SQL é movido para `/var/lib/busca-ai/schema.sql` durante a criação da imagem e não fica acessível pelo navegador.
+O esquema inicial não importa registros de empresas, usuários, devoluções ou mensagens. O banco novo começa vazio; os registros do InfinityFree não são apagados nem modificados.
 
-## Banco de dados de produção
-O container executa PHP/Apache, mas **não contém um servidor MySQL**. É necessário ter um serviço MySQL externo e acessível pelo Render. Configure no serviço Render, em Environment:
+## Variáveis no Render
+No serviço Render `busca-ai-php`, configure as variáveis abaixo usando a connection string **Session pooler** exibida em Supabase → Connect. O Render precisa de endpoint IPv4; por isso, use o pooler de sessão (porta 5432), não o endpoint direto IPv6.
 
-- `DB_HOST`: host do MySQL
-- `DB_PORT`: porta do MySQL (geralmente 3306)
-- `DB_NAME`: banco de dados usado pela aplicação
-- `DB_USER`: usuário
-- `DB_PASSWORD`: senha
-- `DB_SSL_CA`: caminho do certificado CA, somente se o provedor exigir TLS com CA específica
+- `DB_HOST`: host do Session pooler
+- `DB_PORT`: `5432`
+- `DB_NAME`: `postgres`
+- `DB_USER`: usuário exibido na connection string do Session pooler (formato `postgres.<project-ref>`)
+- `DB_PASSWORD`: senha do banco PostgreSQL definida no painel Supabase
+- `DB_SSLMODE`: `require`
 
-A conexão local continua usando XAMPP quando essas variáveis não estão definidas. Em produção, o código não usa `localhost` nem o usuário root do XAMPP.
+Nunca coloque a senha no GitHub, em arquivos públicos ou no chat. Salve-a somente nos Secrets/Environment do Render.
 
-### Criar as tabelas
-O arquivo `BUSCA-AI/busca_ai_novo.sql` contém o esquema das tabelas. Ele **não contém registros de empresas, usuários, devoluções ou mensagens**. O script cria o banco `busca_ai_novo` e as tabelas. Execute-o uma única vez no servidor MySQL de produção, usando uma conta autorizada, e defina `DB_NAME=busca_ai_novo` no Render.
+## Segurança e validação
+As cinco tabelas estão com Row Level Security habilitado. O backend PHP conecta ao PostgreSQL pelo servidor Render; não exponha a chave de banco nem credenciais no navegador. Antes de considerar a migração concluída, valide cadastro, login, dashboard, solicitação e acompanhamento de devoluções, atualização de status, histórico, perfil, senha e contato.
 
-Não importe esse esquema sobre um banco com dados que você precisa preservar sem antes fazer backup e conferir o destino. O projeto não cria automaticamente o usuário interno do painel.
-
-## Limitação
-Sem um MySQL remoto configurado e com o esquema importado, as páginas públicas podem abrir, mas cadastro, login, painel e devoluções não funcionarão.
+## Ambiente local
+O ambiente XAMPP antigo usa MySQL e não é compatível com esta conexão PostgreSQL sem configurar as mesmas variáveis e instalar `pdo_pgsql`. O banco MySQL do InfinityFree permanece como cópia independente e não é alterado por este deploy.
